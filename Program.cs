@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Sockets;
 
 // ========== Part 1 ==========
 // 1. A balanced tree is a tree that has relatively even subtrees. By even I mean similar heights.
@@ -112,21 +113,153 @@ public class AvlNode
 
 class Program
 {
-    static int GetHeight(AvlNode node) { }
+    static int GetHeight(AvlNode node) 
+    {
+        if (node == null) return 0;
+        return node.Height;
+    }
 
-    static int GetBalance(AvlNode node) { }
+    static int GetBalance(AvlNode node) 
+    {
+        if (node == null) return 0;
+        return GetHeight(node.Left) - GetHeight(node.Right);
+    }
 
-    static void UpdateHeight(AvlNode node) { }
+    static void UpdateHeight(AvlNode node) 
+    {
+        node.Height = 1 + Math.Max(GetHeight(node.Left), GetHeight(node.Right));
+    }
 
-    static AvlNode RotateRight(AvlNode node) { }
+    static AvlNode RotateRight(AvlNode node) 
+    {
+        AvlNode newRoot = node.Left;
 
-    static AvlNode RotateLeft(AvlNode node) { }
+        node.Left = newRoot.Right;
+        newRoot.Right = node;
 
-    static AvlNode Insert(AvlNode node, int value) { }
+        UpdateHeight(node);
+        UpdateHeight(newRoot);
 
-    void PrintInOrder(AvlNode node) { }
+        return newRoot;
+    }
 
-    bool IsBalanced(AvlNode root) { }
+    static AvlNode RotateLeft(AvlNode node)
+    {
+        AvlNode newRoot = node.Right;
 
-    static void Main(string[] args) { }
+        node.Right = newRoot.Left;
+        newRoot.Left = node;
+
+        UpdateHeight(node);
+        UpdateHeight(newRoot);
+
+        return newRoot;
+    }
+
+    static AvlNode Insert(AvlNode node, int value) 
+    { 
+        if (node == null)
+            return new AvlNode { Value = value, Height = 1 };
+
+        if (value < node.Value)
+            node.Left = Insert(node.Left, value);
+        else if (value > node.Value)
+            node.Right = Insert(node.Right, value);
+        else
+            return node;
+
+        UpdateHeight(node);
+
+        int balance = GetBalance(node);
+
+        // Left-Left
+        if (balance > 1 && value < node.Left.Value)
+        {
+            Console.WriteLine("Rotation at " + node.Value + ": LL");
+            return RotateRight(node);
+        }
+            
+
+        // Right-Right
+        if (balance < -1 && value > node.Right.Value)
+        {
+            Console.WriteLine("Rotation at " + node.Value + ": RR");
+            return RotateLeft(node);
+        }
+            
+
+        // Left-Right
+        if (balance > 1 && value > node.Left.Value)
+        {
+            Console.WriteLine("Rotation at " + node.Value + ": LR");
+            node.Left = RotateLeft(node.Left);
+            return RotateRight(node);
+        }
+
+        // Right-Left
+        if (balance < -1 && value < node.Right.Value)
+        {
+            Console.WriteLine("Rotation at " + node.Value + ": RL");
+            node.Right = RotateRight(node.Right);
+            return RotateLeft(node);
+        }
+
+        return node;
+    }
+
+    static void PrintInOrder(AvlNode node)
+    {
+        if (node == null) return;
+
+        PrintInOrder(node.Left);
+        Console.Write(node.Value + " ");
+        PrintInOrder(node.Right);
+    }
+
+    static bool IsBalanced(AvlNode root)
+    {
+        if (root == null) return true;
+
+        if (Math.Abs(GetBalance(root)) > 1)
+            return false;
+
+        return IsBalanced(root.Left) && IsBalanced(root.Right);
+    }
+
+    static void Main(string[] args)
+    {
+        AvlNode root = null;
+
+        int[] values = {52, 37, 68, 29, 44, 41, 75, 80, 61, 78 };
+
+        // a.
+        foreach (int value in values)
+        {
+            Console.WriteLine("Insert " + value);
+
+            root = Insert(root, value);
+        }
+        Console.WriteLine();
+
+        // b.
+        
+        Console.Write("In order: ");
+        PrintInOrder(root);
+
+        Console.WriteLine();
+        Console.WriteLine("Root: " + root.Value);
+        Console.WriteLine("Height: " + GetHeight(root));
+        Console.WriteLine("Is Balanced: " + IsBalanced(root));
+        Console.WriteLine();
+
+        // c.
+        AvlNode root2 = null;
+
+        for (int i = 1; i <= 15; i++)
+        {
+            root2 = Insert(root2, i);
+        }
+
+        Console.WriteLine("Second tree height: " + GetHeight(root2));
+    }
 }
